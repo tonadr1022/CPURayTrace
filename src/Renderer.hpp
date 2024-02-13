@@ -44,6 +44,9 @@ class Renderer {
   glm::vec4* m_accumulationData = nullptr;
   int m_frameIndex = 1;
 
+#if PAR_EX
+  std::vector<int> m_ImageHorizontalIter, m_ImageVerticalIter;
+#endif
 
 };
 

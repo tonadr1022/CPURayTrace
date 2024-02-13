@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <execution>
 #include <thread>
+#include <execution>
 
 namespace Utils {
 
@@ -26,7 +27,7 @@ glm::vec3 Renderer::rayColor(const Ray& r, int depth) {
   HitRecord hitRec;
   // return if no bounces left
   if (depth <= 0) {
-    return {0,0,0};
+    return {0, 0, 0};
   }
 
   if (m_activeScene->hitAny(r, Interval(0.001, Math::infinity), hitRec)) {
@@ -35,7 +36,7 @@ glm::vec3 Renderer::rayColor(const Ray& r, int depth) {
     // floating point inaccuracies make the correction factor necessary.
     // otherwise, the ray might intersect on the wrong side of the sphere
 //    return 0.5f * rayColor(Ray(hitRec.point + hitRec.normal * CORRECTION_FACTOR, direction), depth-1);
-    return 0.5f * rayColor(Ray(hitRec.point, direction), depth-1);
+    return 0.5f * rayColor(Ray(hitRec.point, direction), depth - 1);
     return 0.5f * (hitRec.normal + glm::vec3(1, 1, 1));
   }
 
@@ -81,6 +82,14 @@ void Renderer::onResize(int width, int height) {
   m_imageData = new uint32_t[m_width * m_height];
   delete[] m_accumulationData;
   m_accumulationData = new glm::vec4[m_width * m_height];
+#if PAR_EX
+  m_ImageHorizontalIter.resize(m_width);
+  m_ImageVerticalIter.resize(m_height);
+  for (int i = 0; i < m_width; i++)
+    m_ImageHorizontalIter[i] = i;
+  for (int i = 0; i < m_height; i++)
+    m_ImageVerticalIter[i] = i;
+#endif
 }
 
 void Renderer::render(const Camera& camera, const Scene& scene) {
@@ -89,6 +98,23 @@ void Renderer::render(const Camera& camera, const Scene& scene) {
   if (m_frameIndex == 1) {
     memset(m_accumulationData, 0, m_width * m_height * sizeof(glm::vec4));
   }
+
+  // can't use parallel execution on clang, so use futures with thread pool instead
+
+#if PAR_EX
+  std::for_each(std::execution::par, m_ImageVerticalIter.begin(), m_ImageVerticalIter.end(),
+                [this](int y) {
+                  std::for_each(std::execution::par, m_ImageHorizontalIter.begin(), m_ImageHorizontalIter.end(),
+                                [this, y](int x) {
+                                  glm::vec4 color = colorPerPixel(x, y);
+                                  m_accumulationData[y * m_width + x] += color;
+                                  glm::vec4 accumulatedColor = m_accumulationData[y * m_width + x];
+                                  accumulatedColor /= m_frameIndex;
+                                  accumulatedColor = glm::clamp(accumulatedColor, glm::vec4(0), glm::vec4(1));
+                                  m_imageData[y * m_width + x] = Utils::convertToRGBA(accumulatedColor);
+                                });
+                });
+#else
   int portion_height = m_height / m_numThreads;
   int start_y = 0, end_y = 0;
   std::vector<std::future<void>> futures;
@@ -113,6 +139,7 @@ void Renderer::render(const Camera& camera, const Scene& scene) {
   for (auto& future : futures) {
     future.wait();
   }
+#endif
 
   m_finalTexture->load2dData(m_imageData, static_cast<int>(m_width), static_cast<int>(m_height));
 

@@ -19,6 +19,7 @@
 #include <map>
 #include <sstream>
 #include <random>
+#include <unordered_map>
 
 #include "Math.hpp"
 
@@ -26,6 +27,8 @@
 
 #define WIDTH 960
 #define HEIGHT 540
+#define PAR_EX 0
+
 #define CORRECTION_FACTOR 0.0001f
 
 #endif //RAY_TRACE__RAYTRACE_PCH_HPP_

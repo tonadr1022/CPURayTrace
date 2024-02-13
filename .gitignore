@@ -2,3 +2,4 @@ out.ppm
 cmake-build-debug
 .idea
 .DS_Store
+cmake-build-debug-visual-studio
