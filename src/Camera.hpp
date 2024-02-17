@@ -5,7 +5,7 @@
 #ifndef RAY_TRACE_SRC_CAMERA_HPP_
 #define RAY_TRACE_SRC_CAMERA_HPP_
 #include <glm/glm.hpp>
-#include "Ray.hpp"
+#include "math/Ray.hpp"
 
 class Camera {
  public:

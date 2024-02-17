@@ -27,7 +27,7 @@ class App {
   Renderer m_renderer;
   int m_viewportWidth{}, m_viewportHeight;
   Camera m_camera;
-  Scene m_scene;
+  SceneManager m_sceneManager;
   bool m_running = true;
   bool m_renderLoop = true;
   float m_lastRenderDurationMS{};

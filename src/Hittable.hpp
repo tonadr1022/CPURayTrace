@@ -5,16 +5,17 @@
 #ifndef RAY_TRACE_SRC_HITTABLE_HPP_
 #define RAY_TRACE_SRC_HITTABLE_HPP_
 
-#include "Ray.hpp"
+#include "math/Ray.hpp"
 #include "raytrace_pch.hpp"
 #include <glm/glm.hpp>
-#include "Interval.hpp"
+#include "math/Interval.hpp"
 
 struct HitRecord {
   glm::vec3 point{};
   glm::vec3 normal{};
   float t;
   bool frontFace;
+  int objectIndex;
 
   /**
    * sets hit record normal vector. outward normal should be unit length
@@ -34,10 +35,13 @@ struct HitRecord {
 
 class Hittable {
  public:
+  Hittable(int materialIndex_) : materialIndex(materialIndex_) {}
   virtual ~Hittable() = default;
 
   virtual bool hit(const Ray& r, Interval rayT, HitRecord& rec) const = 0;
   virtual std::string toString() = 0;
+
+  int materialIndex = 0;
 };
 
 #endif //RAY_TRACE_SRC_HITTABLE_HPP_

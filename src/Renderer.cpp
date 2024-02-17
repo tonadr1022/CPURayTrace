@@ -3,7 +3,7 @@
 //
 
 #include "Renderer.hpp"
-#include "Ray.hpp"
+#include "math/Ray.hpp"
 #include <algorithm>
 #include <execution>
 #include <thread>
@@ -12,15 +12,32 @@
 namespace Utils {
 
 static uint32_t convertToRGBA(const glm::vec4& color) {
-  auto r = (uint8_t) (color.r * 255.0f);
-  auto g = (uint8_t) (color.g * 255.0f);
-  auto b = (uint8_t) (color.b * 255.0f);
+  // linear to gamma transform, inverse of gamma 2, sqrt
+  auto r = (uint8_t) (sqrt(color.r) * 255.0f);
+  auto g = (uint8_t) (sqrt(color.g) * 255.0f);
+  auto b = (uint8_t) (sqrt(color.b) * 255.0f);
   auto a = (uint8_t) (color.a * 255.0f);
 
   uint32_t result = (a << 24) | (b << 16) | (g << 8) | r;
   return result;
 }
+}
 
+bool Renderer::hitAny(const Ray& r, Interval rayT, HitRecord& rec) const {
+  HitRecord tempRec;
+  bool hitAny = false;
+  float closestSoFar = rayT.max;
+  int objectIndex = 0;
+  for (const auto& object : m_activeScene->hittables) {
+    if (object->hit(r, Interval(rayT.min, closestSoFar), tempRec)) {
+      hitAny = true;
+      tempRec.objectIndex = objectIndex;
+      closestSoFar = tempRec.t;
+      rec = tempRec;
+    }
+    objectIndex++;
+  }
+  return hitAny;
 }
 
 glm::vec3 Renderer::rayColor(const Ray& r, int depth) {
@@ -29,15 +46,18 @@ glm::vec3 Renderer::rayColor(const Ray& r, int depth) {
   if (depth <= 0) {
     return {0, 0, 0};
   }
-
-  if (m_activeScene->hitAny(r, Interval(0.001, Math::infinity), hitRec)) {
+  // floating point inaccuracies make the correction factor necessary.
+  // otherwise, the ray might intersect on the wrong side of the sphere
+  if (hitAny(r, Interval(0.001, Math::infinity), hitRec)) {
     // [-1,1] -> [0,1]
-    glm::vec3 direction = Math::randOnHemisphere(hitRec.normal);
-    // floating point inaccuracies make the correction factor necessary.
-    // otherwise, the ray might intersect on the wrong side of the sphere
-//    return 0.5f * rayColor(Ray(hitRec.point + hitRec.normal * CORRECTION_FACTOR, direction), depth-1);
+//    glm::vec3 direction = Math::randOnHemisphere(hitRec.normal);
+    auto& object = m_activeScene->hittables[hitRec.objectIndex];
+    auto& material = m_activeScene->materials[object->materialIndex];
+
+// Lambertian distribution, random point on unit sphere tangent to hit point
+    glm::vec3 direction = hitRec.normal + Math::randomUnitVec3();
     return 0.5f * rayColor(Ray(hitRec.point, direction), depth - 1);
-    return 0.5f * (hitRec.normal + glm::vec3(1, 1, 1));
+//    return 0.5f * (hitRec.normal + glm::vec3(1, 1, 1));
   }
 
   glm::vec3 unitDir = glm::normalize(r.direction);

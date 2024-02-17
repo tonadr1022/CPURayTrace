@@ -8,7 +8,7 @@ set_property(TARGET PROPERTY CXX_STANDARD 20)
 
 add_executable(${PROJECT_NAME} src/main.cpp
         src/color.hpp
-        src/Ray.hpp
+        src/math/Ray.hpp
         src/raytrace_pch.hpp
         src/Renderer.cpp
         src/Renderer.hpp
@@ -35,8 +35,10 @@ add_executable(${PROJECT_NAME} src/main.cpp
         src/HittableList.hpp
         src/Scene.cpp
         src/Scene.hpp
-        src/Interval.hpp
-        src/Math.hpp
+        src/math/Interval.hpp
+        src/math/Math.hpp
+        src/SceneManager.cpp
+        src/SceneManager.hpp
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE

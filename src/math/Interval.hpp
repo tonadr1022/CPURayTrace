@@ -4,7 +4,7 @@
 
 #ifndef RAY_TRACE_SRC_INTERVAL_HPP_
 #define RAY_TRACE_SRC_INTERVAL_HPP_
-#include "raytrace_pch.hpp"
+#include "../raytrace_pch.hpp"
 class Interval {
  public:
   float min, max;

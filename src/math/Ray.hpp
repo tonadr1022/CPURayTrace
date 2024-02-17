@@ -5,7 +5,7 @@
 #ifndef RAY_TRACE_CMAKE_BUILD_DEBUG_RAY_HPP_
 #define RAY_TRACE_CMAKE_BUILD_DEBUG_RAY_HPP_
 
-#include <glm/glm.hpp>
+#include "glm/glm/glm.hpp"
 
 struct Ray {
  public:

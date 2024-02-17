@@ -79,10 +79,15 @@ App::App() :
   instancePtr = this;
   initImGui();
 
-  m_scene.addHittable(std::make_shared<Sphere>(glm::vec3(0, 0, -1), 0.5f));
-  m_scene.addHittable(std::make_shared<Sphere>(glm::vec3(0, -100.5, -1), 100));
+  auto scene = std::make_shared<Scene>();
+  m_sceneManager.setActiveScene(scene);
+  m_sceneManager.createMaterial();
+  int materialIndex = 0;
+  m_sceneManager.createSphere(glm::vec3(0, 0, -1), 0.5f, materialIndex);
+  m_sceneManager.createSphere(glm::vec3(0, -100.5, -1), 100, materialIndex);
 
 }
+
 App::~App() {
   ImGui_ImplOpenGL3_Shutdown();
   ImGui_ImplGlfw_Shutdown();
@@ -109,7 +114,7 @@ void App::render() {
   Timer timer;
   m_camera.onResize(m_viewportWidth, m_viewportHeight);
   m_renderer.onResize(m_viewportWidth, m_viewportHeight);
-  m_renderer.render(m_camera, m_scene);
+  m_renderer.render(m_camera, *m_sceneManager.scene());
   m_lastRenderDurationMS = timer.elapsedMilliSeconds();
 }
 

@@ -1,5 +1,5 @@
 #include "color.hpp"
-#include "Ray.hpp"
+#include "math/Ray.hpp"
 #include "app/App.hpp"
 
 

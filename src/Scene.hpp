@@ -8,33 +8,33 @@
 #include "Hittable.hpp"
 
 using ObjectList = std::vector<std::shared_ptr<Hittable>>;
-class Scene {
- public:
+
+struct Material {
+  glm::vec3 albedo{1.0f};
+  float roughness = 0.0f;
+  float metallic = 0.0f;
+  glm::vec3 emissionColor{0.0f};
+  float emissionPower = 0.0f;
+  [[nodiscard]] glm::vec3 emission() const { return emissionColor * emissionPower; }
+
+  Material(glm::vec3 albedo_, float roughness_, float metallic_, glm::vec3 emissionColor_, float emissionPower_)
+      : albedo(albedo_),
+        roughness(roughness_),
+        metallic(metallic_),
+        emissionColor(emissionColor_),
+        emissionPower(emissionPower_) {}
+};
+
+struct Scene {
   Scene() = default;
-  void clear() { m_objects.clear(); }
-  ObjectList& objects() { return m_objects; }
+//  void clear() { m_objects.clear(); }
+//  ObjectList& objects() { return m_objects; }
 
-  void addHittable(const std::shared_ptr<Hittable>& hittable) {
-    m_objects.push_back(hittable);
-  }
 
-  bool hitAny(const Ray& r, Interval rayT, HitRecord& rec) const {
-    HitRecord tempRec;
-    bool hitAny = false;
-    float closestSoFar = rayT.max;
 
-    for (const auto& object : m_objects) {
-      if (object->hit(r, Interval(rayT.min, closestSoFar), tempRec)) {
-        hitAny = true;
-        closestSoFar = tempRec.t;
-        rec = tempRec;
-      }
-    }
-    return hitAny;
-  }
+  std::vector<std::shared_ptr<Hittable>> hittables;
+  std::vector<std::shared_ptr<Material>> materials;
 
- private:
-  ObjectList m_objects;
 };
 
 #endif //RAY_TRACE_SRC_SCENE_HPP_

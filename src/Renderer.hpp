@@ -11,6 +11,7 @@
 #include "gl/Texture.hpp"
 #include "Camera.hpp"
 #include "Scene.hpp"
+#include "SceneManager.hpp"
 #include <BS_thread_pool.hpp>
 
 class Renderer {
@@ -32,6 +33,7 @@ class Renderer {
   Settings m_settings{};
   glm::vec4 colorPerPixel(int x, int y);
   glm::vec3 rayColor(const Ray& r, int depth);
+  bool hitAny(const Ray& r, Interval rayT, HitRecord& rec) const;
 
   int m_numThreads;
   BS::thread_pool m_threadPool;

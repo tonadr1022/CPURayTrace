@@ -7,7 +7,7 @@
 
 #include "raytrace_pch.hpp"
 #include "Hittable.hpp"
-#include "Interval.hpp"
+#include "math/Interval.hpp"
 
 /**
  * Notes:
@@ -31,7 +31,9 @@
  */
 class Sphere : public Hittable {
  public:
-  Sphere(glm::vec3 center, float radius) : m_center(center), m_radius(radius) {}
+  Sphere(glm::vec3 center, float radius, int materialIndex)
+      : Hittable(materialIndex), m_center(center), m_radius(radius) {
+  }
 
   bool hit(const Ray& r, Interval rayT, HitRecord& rec) const override {
     const glm::vec3 oc = r.origin - m_center;
