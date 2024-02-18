@@ -50,7 +50,12 @@ bool Renderer::hitAny(const Ray& r, Interval rayT, HitRecord& rec) const {
 glm::vec3 Renderer::rayColor(const Ray& r, int depth) {
   // return if no bounces left
   if (depth <= 0) {
-    return {0,0,0};
+    // Return sky if no hit
+    glm::vec3 unitDir = glm::normalize(r.direction);
+    //[-1,1 ] -> [0,1]
+    float sky = (unitDir.y + 1.f) * 0.5f;
+    // lerp between sky color and white
+    return (1.0f - sky) * glm::vec3(1, 1, 1) + sky * glm::vec3(0.5, 0.7, 1.0);
   }
 
   HitRecord hitRec;
@@ -205,16 +210,16 @@ void Renderer::render(const Camera& camera, const Scene& scene) {
   }
 
 //
-//  for (int y = m_height/2 + 30; y < m_height/2 + 50; ++y) {
-//    for (int x = m_width/3 + 40; x < m_width/2; ++x) {
-//      glm::vec4 color = colorPerPixel(x, y);
-//      m_accumulationData[y * m_width + x] += color;
-//      glm::vec4 accumulatedColor = m_accumulationData[y * m_width + x];
-//      accumulatedColor /= m_frameIndex;
-//      accumulatedColor = glm::clamp(accumulatedColor, glm::vec4(0), glm::vec4(1));
-//      m_imageData[y * m_width + x] = Utils::convertToRGBA(accumulatedColor);
-//    }
-//  }
+  for (int y = 0; y < m_height; ++y) {
+    for (int x = 0; x < m_width; ++x) {
+      glm::vec4 color = colorPerPixel(x, y);
+      m_accumulationData[y * m_width + x] += color;
+      glm::vec4 accumulatedColor = m_accumulationData[y * m_width + x];
+      accumulatedColor /= m_frameIndex;
+      accumulatedColor = glm::clamp(accumulatedColor, glm::vec4(0), glm::vec4(1));
+      m_imageData[y * m_width + x] = Utils::convertToRGBA(accumulatedColor);
+    }
+  }
 
 #endif
 

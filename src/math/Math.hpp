@@ -58,6 +58,15 @@ inline glm::vec3 randOnHemisphere(const glm::vec3& normal) {
   }
 }
 
+inline glm::vec3 randOnUnitDisk() {
+  while (true) {
+    glm::vec3 point = {randomFloat(-1, 1), randomFloat(-1,1), 0};
+    if (glm::dot(point, point) < 1) {
+      return point;
+    }
+  }
+}
+
 inline glm::vec3 reflectVec3(const glm::vec3& vec, const glm::vec3& normal) {
   return vec - 2 * glm::dot(vec, normal) * normal;
 }

@@ -25,8 +25,8 @@
 
 
 
-#define WIDTH 960
-#define HEIGHT 540
+#define WIDTH 1200
+#define HEIGHT 800
 #define PAR_EX 0
 
 #define CORRECTION_FACTOR 0.0001f

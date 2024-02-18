@@ -27,6 +27,8 @@ class Camera {
   glm::vec3 pixelDeltaU{};
   glm::vec3 pixelDeltaV{};
   float focalLength = 1.0;
+  float defocusAngle = 0.0f;
+  float focusDistance = 10.0f;
 
   float viewportWidth{};
   float viewportHeight{};
@@ -38,6 +40,9 @@ class Camera {
 
   // basis vectors, u points to camera right, v points to camera up, w points opposite view dir
   glm::vec3 u, v, w;
+  glm::vec3 defocusDiskU, defocusDiskV;
+  glm::vec3 defocusDiskSample() const;
+
 
 };
 

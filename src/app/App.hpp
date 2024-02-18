@@ -33,7 +33,7 @@ class App {
   Camera m_camera;
   SceneManager m_sceneManager;
   bool m_running = true;
-  bool m_renderLoop = true;
+  bool m_renderLoop = false;
   float m_lastRenderDurationMS{};
 
   void initImGui();
