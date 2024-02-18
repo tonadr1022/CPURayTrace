@@ -4,36 +4,39 @@
 
 #ifndef RAY_TRACE_SRC_SCENE_HPP_
 #define RAY_TRACE_SRC_SCENE_HPP_
+
 #include "raytrace_pch.hpp"
 #include "Hittable.hpp"
 
-using ObjectList = std::vector<std::shared_ptr<Hittable>>;
+enum MaterialType {
+  Lambertian,
+  Metal,
+  Dielectric
+};
 
 struct Material {
-  glm::vec3 albedo{1.0f};
-  float roughness = 0.0f;
-  float metallic = 0.0f;
-  glm::vec3 emissionColor{0.0f};
-  float emissionPower = 0.0f;
-  [[nodiscard]] glm::vec3 emission() const { return emissionColor * emissionPower; }
+  MaterialType type;
+  glm::vec3 albedo = {0.0f, 0.0f, 0.0f};
+  float fuzz = 0;
+  float refractionIndex = 0;
+};
 
-  Material(glm::vec3 albedo_, float roughness_, float metallic_, glm::vec3 emissionColor_, float emissionPower_)
-      : albedo(albedo_),
-        roughness(roughness_),
-        metallic(metallic_),
-        emissionColor(emissionColor_),
-        emissionPower(emissionPower_) {}
+struct Sphere {
+  glm::vec3 center;
+  float radius;
+  int materialIndex;
+
+  Sphere(glm::vec3 center_, float radius_, int materialIndex_)
+      : center(center_), radius(radius_), materialIndex(materialIndex_) {
+  }
 };
 
 struct Scene {
   Scene() = default;
 //  void clear() { m_objects.clear(); }
 //  ObjectList& objects() { return m_objects; }
-
-
-
-  std::vector<std::shared_ptr<Hittable>> hittables;
-  std::vector<std::shared_ptr<Material>> materials;
+  std::vector<Sphere> spheres;
+  std::vector<Material> materials;
 
 };
 

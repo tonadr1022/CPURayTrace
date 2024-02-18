@@ -9,10 +9,12 @@
 #include "app/Window.hpp"
 #include "gl/FrameBuffer.hpp"
 #include "gl/Texture.hpp"
-#include "Camera.hpp"
-#include "Scene.hpp"
-#include "SceneManager.hpp"
+#include "Hittable.hpp"
 #include <BS_thread_pool.hpp>
+
+class Camera;
+class Scene;
+class Sphere;
 
 class Renderer {
  public:
@@ -25,14 +27,17 @@ class Renderer {
   ~Renderer();
   void render(const Camera& camera, const Scene& scene);
   [[nodiscard]] std::shared_ptr<Texture<GL_TEXTURE_2D>> getFinalTexture() const { return m_finalTexture; }
+  int frameIndex() const { return m_frameIndex; }
   void onResize(int width, int height);
 
   void reset();
   Settings& settings() { return m_settings; }
+  void screenshot();
  private:
   Settings m_settings{};
   glm::vec4 colorPerPixel(int x, int y);
   glm::vec3 rayColor(const Ray& r, int depth);
+  bool hitSphere(const Sphere& sphere, const Ray& r, Interval rayT, HitRecord& rec) const;
   bool hitAny(const Ray& r, Interval rayT, HitRecord& rec) const;
 
   int m_numThreads;

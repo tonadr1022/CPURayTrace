@@ -13,7 +13,6 @@ add_executable(${PROJECT_NAME} src/main.cpp
         src/Renderer.cpp
         src/Renderer.hpp
         src/Hittable.hpp
-        src/Sphere.hpp
         src/app/App.cpp
         src/app/App.hpp
         src/app/Window.cpp
@@ -32,13 +31,11 @@ add_executable(${PROJECT_NAME} src/main.cpp
         src/Camera.cpp
         src/Camera.hpp
         src/Timer.hpp
-        src/HittableList.hpp
-        src/Scene.cpp
-        src/Scene.hpp
         src/math/Interval.hpp
         src/math/Math.hpp
         src/SceneManager.cpp
         src/SceneManager.hpp
+        src/Scene.hpp
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE

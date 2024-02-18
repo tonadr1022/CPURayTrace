@@ -4,8 +4,11 @@
 
 #ifndef RAY_TRACE_SRC_APP_HPP_
 #define RAY_TRACE_SRC_APP_HPP_
-#include "../Renderer.hpp"
 #include "Window.hpp"
+#include "../Camera.hpp"
+#include "../SceneManager.hpp"
+#include "../Renderer.hpp"
+
 class App {
  public:
   App();
@@ -22,6 +25,7 @@ class App {
   void render();
 
  private:
+  bool m_reset = false;
   static App *instancePtr;
   Window m_window;
   Renderer m_renderer;

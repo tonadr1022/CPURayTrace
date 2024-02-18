@@ -5,19 +5,20 @@
 #ifndef RAY_TRACE_SRC_SCENEMANAGER_HPP_
 #define RAY_TRACE_SRC_SCENEMANAGER_HPP_
 
+#include "raytrace_pch.hpp"
 #include "Scene.hpp"
 
 class SceneManager {
  public:
   void setActiveScene(const std::shared_ptr<Scene>& scene);
   void createSphere(glm::vec3 pos, float radius, int materialIndex);
-  void createMaterial(glm::vec3 albedo = {1.0f, 1.0f, 1.0f},
-                    float roughness = 1.0f,
-                    float metallic = 1.0f,
-                    glm::vec3 emissionColor = {0.0f, 0.0f, 0.0f},
-                    float emissionPower = 0.0f);
+  void createLambertian(glm::vec3 albedo);
+  void createMetal(glm::vec3 albedo, float fuzz);
+  void createDielectric(float refractionIndex);
   [[nodiscard]] Scene* scene() const { return m_activeScene.get(); }
  private:
+
+
   std::shared_ptr<Scene> m_activeScene = nullptr;
 };
 

@@ -154,13 +154,6 @@ build CMakeFiles/ray_trace.dir/src/Camera.cpp.o: CXX_COMPILER__ray_trace_unscann
   OBJECT_DIR = CMakeFiles/ray_trace.dir
   OBJECT_FILE_DIR = CMakeFiles/ray_trace.dir/src
 
-build CMakeFiles/ray_trace.dir/src/Scene.cpp.o: CXX_COMPILER__ray_trace_unscanned_Debug /Users/tony/CLionProjects/ray_trace/src/Scene.cpp || cmake_object_order_depends_target_ray_trace
-  DEP_FILE = CMakeFiles/ray_trace.dir/src/Scene.cpp.o.d
-  FLAGS = -g -std=gnu++20 -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk -fcolor-diagnostics
-  INCLUDES = -I/Users/tony/CLionProjects/ray_trace/dep -I/Users/tony/CLionProjects/ray_trace/dep/stb_image -I/Users/tony/CLionProjects/ray_trace/dep/glad -I/Users/tony/CLionProjects/ray_trace/dep/imgui-docking -I/Users/tony/CLionProjects/ray_trace/dep/imgui-docking/backends -I/Users/tony/CLionProjects/ray_trace/dep/thread_pool/include -I/Users/tony/CLionProjects/ray_trace/dep/glfw/include -I/Users/tony/CLionProjects/ray_trace/dep/glm/glm/.. -F/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk/System/Library/Frameworks
-  OBJECT_DIR = CMakeFiles/ray_trace.dir
-  OBJECT_FILE_DIR = CMakeFiles/ray_trace.dir/src
-
 build CMakeFiles/ray_trace.dir/src/SceneManager.cpp.o: CXX_COMPILER__ray_trace_unscanned_Debug /Users/tony/CLionProjects/ray_trace/src/SceneManager.cpp || cmake_object_order_depends_target_ray_trace
   DEP_FILE = CMakeFiles/ray_trace.dir/src/SceneManager.cpp.o.d
   FLAGS = -g -std=gnu++20 -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk -fcolor-diagnostics
@@ -176,7 +169,7 @@ build CMakeFiles/ray_trace.dir/src/SceneManager.cpp.o: CXX_COMPILER__ray_trace_u
 #############################################
 # Link the executable ray_trace
 
-build ray_trace: CXX_EXECUTABLE_LINKER__ray_trace_Debug CMakeFiles/ray_trace.dir/src/main.cpp.o CMakeFiles/ray_trace.dir/src/Renderer.cpp.o CMakeFiles/ray_trace.dir/src/app/App.cpp.o CMakeFiles/ray_trace.dir/src/app/Window.cpp.o CMakeFiles/ray_trace.dir/src/input/Keyboard.cpp.o CMakeFiles/ray_trace.dir/src/input/Mouse.cpp.o CMakeFiles/ray_trace.dir/dep/glad/glad.c.o CMakeFiles/ray_trace.dir/dep/imgui-docking/imgui.cpp.o CMakeFiles/ray_trace.dir/dep/imgui-docking/imgui_demo.cpp.o CMakeFiles/ray_trace.dir/dep/imgui-docking/imgui_draw.cpp.o CMakeFiles/ray_trace.dir/dep/imgui-docking/imgui_tables.cpp.o CMakeFiles/ray_trace.dir/dep/imgui-docking/imgui_widgets.cpp.o CMakeFiles/ray_trace.dir/dep/imgui-docking/backends/imgui_impl_glfw.cpp.o CMakeFiles/ray_trace.dir/dep/imgui-docking/backends/imgui_impl_opengl3.cpp.o CMakeFiles/ray_trace.dir/src/Camera.cpp.o CMakeFiles/ray_trace.dir/src/Scene.cpp.o CMakeFiles/ray_trace.dir/src/SceneManager.cpp.o | dep/glfw/src/libglfw3.a || dep/glfw/src/libglfw3.a
+build ray_trace: CXX_EXECUTABLE_LINKER__ray_trace_Debug CMakeFiles/ray_trace.dir/src/main.cpp.o CMakeFiles/ray_trace.dir/src/Renderer.cpp.o CMakeFiles/ray_trace.dir/src/app/App.cpp.o CMakeFiles/ray_trace.dir/src/app/Window.cpp.o CMakeFiles/ray_trace.dir/src/input/Keyboard.cpp.o CMakeFiles/ray_trace.dir/src/input/Mouse.cpp.o CMakeFiles/ray_trace.dir/dep/glad/glad.c.o CMakeFiles/ray_trace.dir/dep/imgui-docking/imgui.cpp.o CMakeFiles/ray_trace.dir/dep/imgui-docking/imgui_demo.cpp.o CMakeFiles/ray_trace.dir/dep/imgui-docking/imgui_draw.cpp.o CMakeFiles/ray_trace.dir/dep/imgui-docking/imgui_tables.cpp.o CMakeFiles/ray_trace.dir/dep/imgui-docking/imgui_widgets.cpp.o CMakeFiles/ray_trace.dir/dep/imgui-docking/backends/imgui_impl_glfw.cpp.o CMakeFiles/ray_trace.dir/dep/imgui-docking/backends/imgui_impl_opengl3.cpp.o CMakeFiles/ray_trace.dir/src/Camera.cpp.o CMakeFiles/ray_trace.dir/src/SceneManager.cpp.o | dep/glfw/src/libglfw3.a || dep/glfw/src/libglfw3.a
   FLAGS = -g -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk
   LINK_LIBRARIES = -Xlinker -framework -Xlinker OpenGL  -Xlinker -framework -Xlinker OpenGL  dep/glfw/src/libglfw3.a  -framework Cocoa  -framework IOKit  -framework CoreFoundation
   OBJECT_DIR = CMakeFiles/ray_trace.dir

@@ -2,11 +2,11 @@
 // Created by Tony Adriansen on 2/5/24.
 //
 
+#include "../Scene.hpp"
 #include "App.hpp"
 #include "../input/Keyboard.hpp"
 #include "../input/Mouse.hpp"
 #include "../Timer.hpp"
-#include "../Sphere.hpp"
 
 App* App::instancePtr = nullptr;
 
@@ -60,7 +60,8 @@ void App::onCursorPositionEvent(double xpos, double ypos) {
 }
 
 void App::onScrollEvent(double xoffset, double yoffset) {
-
+  yoffset > 0 ? m_camera.setFOV(m_camera.fov() + 1) : m_camera.setFOV(m_camera.fov() - 1);
+  m_reset = true;
 }
 
 void App::onResizeEvent(int width, int height) {
@@ -81,10 +82,25 @@ App::App() :
 
   auto scene = std::make_shared<Scene>();
   m_sceneManager.setActiveScene(scene);
-  m_sceneManager.createMaterial();
-  int materialIndex = 0;
-  m_sceneManager.createSphere(glm::vec3(0, 0, -1), 0.5f, materialIndex);
-  m_sceneManager.createSphere(glm::vec3(0, -100.5, -1), 100, materialIndex);
+
+  m_sceneManager.createLambertian(glm::vec3(0.8f, 0.8f, 0.0f));
+  m_sceneManager.createLambertian(glm::vec3(0.1f, 0.2f, 0.5f));
+  m_sceneManager.createDielectric(1.5);
+  m_sceneManager.createMetal(glm::vec3(0.8, 0.6, 0.2), 0.0f);
+
+  m_sceneManager.createSphere(glm::vec3(0, -100.5, -1), 100, 0);
+  m_sceneManager.createSphere(glm::vec3(0, 0, -1), 0.5f, 1);
+  // glass hollow
+  m_sceneManager.createSphere(glm::vec3(-1, 0, -1), 0.5f, 2);
+  m_sceneManager.createSphere(glm::vec3(-1, 0, -1), -0.45f, 2);
+  m_sceneManager.createSphere(glm::vec3(-1, 0, -1), 0.1f, 0);
+
+  m_sceneManager.createSphere(glm::vec3(1, 0, -1), 0.5f, 3);
+
+  m_camera.setLookFrom({-2, 2, 1});
+  m_camera.setLookAt({0, 0, -1});
+  m_camera.setVUp({0, 1, 0});
+  m_camera.setDimensions(m_viewportWidth, m_viewportHeight);
 
 }
 
@@ -112,7 +128,7 @@ void App::initImGui() {
 }
 void App::render() {
   Timer timer;
-  m_camera.onResize(m_viewportWidth, m_viewportHeight);
+  m_camera.setDimensions(m_viewportWidth, m_viewportHeight);
   m_renderer.onResize(m_viewportWidth, m_viewportHeight);
   m_renderer.render(m_camera, *m_sceneManager.scene());
   m_lastRenderDurationMS = timer.elapsedMilliSeconds();
@@ -138,25 +154,90 @@ void App::onUIRender() {
   ImGui::End();
   ImGui::PopStyleVar();
 
-  ImGui::Begin("Settings");
-  ImGui::Text("Frame Time: %.3f", m_lastRenderDurationMS);
-  ImGui::Text("FPS: %.3f", 1000.0f / m_lastRenderDurationMS);
-  ImGui::Text("Width: %i  Height: %i", m_viewportWidth, m_viewportHeight);
-
-  ImGui::Checkbox("Accumulate", &m_renderer.settings().accumulate);
-  ImGui::InputInt("Max Bounce Depth", &m_renderer.settings().maxBounceDepth);
-
-  ImGui::Checkbox("Render Loop", &m_renderLoop);
-
-  if (ImGui::Button("Render")) {
-    render();
+  ImGui::Begin("Scene");
+  static int tabIndex = 0;
+  {
+    ImGui::SameLine();
+    if (ImGui::Button("Scene")) {
+      tabIndex = 0;
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Settings")) {
+      tabIndex = 1;
+    }
   }
-  if (ImGui::Button("Reset")) {
-    m_renderer.reset();
+  if (tabIndex == 1) {
+    ImGui::Text("Frame Time: %.3f", m_lastRenderDurationMS);
+    ImGui::Text("FPS: %.3f", 1000.0f / m_lastRenderDurationMS);
+    ImGui::Text("Width: %i  Height: %i", m_viewportWidth, m_viewportHeight);
+    ImGui::Text("Frame Index %i", m_renderer.frameIndex());
+
+    ImGui::Checkbox("Accumulate", &m_renderer.settings().accumulate);
+
+    if (ImGui::InputInt("Max Bounce Depth", &m_renderer.settings().maxBounceDepth)) {
+      m_reset = true;
+    }
+
+    ImGui::Checkbox("Render Loop", &m_renderLoop);
+
+    if (ImGui::Button("Render")) {
+      render();
+    }
+    if (ImGui::Button("Reset")) {
+      m_renderer.reset();
+    }
+
+    if (ImGui::Button("Screenshot")) {
+      m_renderer.screenshot();
+    }
+
+  } else if (tabIndex == 0) {
+    Scene& scene = *m_sceneManager.scene();
+    for (int i = 0; i < scene.spheres.size(); i++) {
+      ImGui::PushID(i);
+      Sphere& sphere = scene.spheres[i];
+
+      if (ImGui::DragFloat3("Position", glm::value_ptr(sphere.center), 0.1f) ||
+          ImGui::DragFloat("Radius", &sphere.radius, 0.1f) ||
+          ImGui::DragInt("Material", &sphere.materialIndex, 1, 0, (int) scene.materials.size() - 1)) {
+        m_reset = true;
+      }
+
+      ImGui::Separator();
+      ImGui::PopID();
+    }
+
+    ImGui::Text("Materials");
+
+    for (int i = 0; i < scene.materials.size(); i++) {
+      ImGui::PushID(i);
+      Material& material = scene.materials[i];
+
+      if (ImGui::ColorEdit3("Albedo", glm::value_ptr(material.albedo)) ||
+          ImGui::Combo("Type", (int*) &material.type, "Lambertian\0Metal\0Dielectric\0")) {
+        m_reset = true;
+      }
+      if (material.type == Metal) {
+        if (ImGui::SliderFloat("Fuzz", &material.fuzz, 0.0f, 1.0f, "%.3f")) {
+          m_reset = true;
+        }
+      }
+
+      ImGui::Separator();
+      ImGui::PopID();
+
+    }
+
   }
+
   ImGui::End();
 
+  if (m_reset) {
+    m_renderer.reset();
+    m_reset = false;
+  }
   if (m_renderLoop) {
     render();
   }
+
 }

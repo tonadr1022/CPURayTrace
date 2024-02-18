@@ -15,7 +15,7 @@ struct HitRecord {
   glm::vec3 normal{};
   float t;
   bool frontFace;
-  int objectIndex;
+  int materialIndex;
 
   /**
    * sets hit record normal vector. outward normal should be unit length
@@ -31,17 +31,6 @@ struct HitRecord {
     frontFace = glm::dot(r.direction, outwardNormal) < 0.0f;
     normal = frontFace ? outwardNormal : -outwardNormal;
   }
-};
-
-class Hittable {
- public:
-  Hittable(int materialIndex_) : materialIndex(materialIndex_) {}
-  virtual ~Hittable() = default;
-
-  virtual bool hit(const Ray& r, Interval rayT, HitRecord& rec) const = 0;
-  virtual std::string toString() = 0;
-
-  int materialIndex = 0;
 };
 
 #endif //RAY_TRACE_SRC_HITTABLE_HPP_

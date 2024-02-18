@@ -5,63 +5,106 @@
 #include "Renderer.hpp"
 #include "math/Ray.hpp"
 #include <algorithm>
-#include <execution>
 #include <thread>
-#include <execution>
+#include "Camera.hpp"
+#include "Scene.hpp"
+#include <fstream>
+#include <iostream>
 
 namespace Utils {
 
 static uint32_t convertToRGBA(const glm::vec4& color) {
   // linear to gamma transform, inverse of gamma 2, sqrt
-  auto r = (uint8_t) (sqrt(color.r) * 255.0f);
-  auto g = (uint8_t) (sqrt(color.g) * 255.0f);
-  auto b = (uint8_t) (sqrt(color.b) * 255.0f);
-  auto a = (uint8_t) (color.a * 255.0f);
+  auto r = (uint8_t) (std::sqrt(color.r) * 255.999f);
+  auto g = (uint8_t) (std::sqrt(color.g) * 255.999f);
+  auto b = (uint8_t) (std::sqrt(color.b) * 255.999f);
+  auto a = (uint8_t) (color.a * 255.999f);
 
   uint32_t result = (a << 24) | (b << 16) | (g << 8) | r;
   return result;
 }
+
+static glm::ivec3 fromPackedRGBA(uint32_t packed) {
+  return {packed & 0xFF, (packed & 0xFF00) >> 8, (packed & 0xFF0000) >> 16};
+}
+
 }
 
 bool Renderer::hitAny(const Ray& r, Interval rayT, HitRecord& rec) const {
   HitRecord tempRec;
   bool hitAny = false;
   float closestSoFar = rayT.max;
-  int objectIndex = 0;
-  for (const auto& object : m_activeScene->hittables) {
-    if (object->hit(r, Interval(rayT.min, closestSoFar), tempRec)) {
+
+  for (const auto& sphere : m_activeScene->spheres) {
+    if (hitSphere(sphere, r, Interval(rayT.min, closestSoFar), tempRec)) {
       hitAny = true;
-      tempRec.objectIndex = objectIndex;
+      tempRec.materialIndex = sphere.materialIndex;
       closestSoFar = tempRec.t;
       rec = tempRec;
     }
-    objectIndex++;
   }
+
   return hitAny;
 }
 
 glm::vec3 Renderer::rayColor(const Ray& r, int depth) {
-  HitRecord hitRec;
   // return if no bounces left
   if (depth <= 0) {
-    return {0, 0, 0};
+    return {0,0,0};
   }
+
+  HitRecord hitRec;
   // floating point inaccuracies make the correction factor necessary.
   // otherwise, the ray might intersect on the wrong side of the sphere
   if (hitAny(r, Interval(0.001, Math::infinity), hitRec)) {
-    // [-1,1] -> [0,1]
-//    glm::vec3 direction = Math::randOnHemisphere(hitRec.normal);
-    auto& object = m_activeScene->hittables[hitRec.objectIndex];
-    auto& material = m_activeScene->materials[object->materialIndex];
+    auto& material = m_activeScene->materials[hitRec.materialIndex];
+    bool scattered = false;
+    glm::vec3 albedo;
+    Ray scatteredRay;
+    if (material.type == Metal) {
+      // metals reflect the ray hit perfectly
+      glm::vec3 reflectedDirection = Math::reflectVec3(r.direction, hitRec.normal);
+      // fuzz factor is
+      scatteredRay = {hitRec.point, reflectedDirection + material.fuzz * Math::randomUnitVec3()};
+      albedo = material.albedo;
+      // if scattered ray is not absorbed (is same direction as normal, it's scattered)
+      // in some cases, the fuzz factor may cause scattered direction to point in
+      scattered = glm::dot(scatteredRay.direction, hitRec.normal) > 0;
+    } else if (material.type == Lambertian) {
+      // Lambertian distribution, random point on unit sphere tangent to hit point
+      glm::vec3 scatterDirection = hitRec.normal + Math::randomUnitVec3();
+      // if random unit vector is opposite normal, 0 scatter direction vector == bad
+      if (Math::nearZeroVec3(scatterDirection))
+        scatterDirection = hitRec.normal;
 
-// Lambertian distribution, random point on unit sphere tangent to hit point
-    glm::vec3 direction = hitRec.normal + Math::randomUnitVec3();
-    return 0.5f * rayColor(Ray(hitRec.point, direction), depth - 1);
-//    return 0.5f * (hitRec.normal + glm::vec3(1, 1, 1));
+      scatteredRay = {hitRec.point, scatterDirection};
+      albedo = material.albedo;
+      scattered = true;
+    } else if (material.type == Dielectric) {
+      // if front face normal, n1 is air, n2 is material
+      float refractionRatio = hitRec.frontFace ? (1.0f / material.refractionIndex) : material.refractionIndex;
+      glm::vec3 unitDirection = glm::normalize(r.direction);
+      float cos_theta = fmin(glm::dot(-unitDirection, hitRec.normal), 1.0f);
+      float sin_theta = std::sqrt(1.0f - cos_theta * cos_theta);
+      bool cannotRefract = refractionRatio * sin_theta > 1.0f;
+      glm::vec3 scatteredDirection;
+      if (cannotRefract || Math::reflectance(cos_theta, refractionRatio) > Math::randomFloat()) {
+        scatteredDirection = Math::reflectVec3(unitDirection, hitRec.normal);
+      } else {
+        scatteredDirection = Math::refract(unitDirection, hitRec.normal, refractionRatio);
+      }
+
+      albedo = glm::vec3(1.0f);
+      scatteredRay = {hitRec.point, scatteredDirection};
+      scattered = true;
+    }
+
+    glm::vec3 color =  scattered ? albedo * rayColor(scatteredRay, depth - 1) : glm::vec3(0.0f);
+    return color;
   }
 
+  // Return sky if no hit
   glm::vec3 unitDir = glm::normalize(r.direction);
-
   //[-1,1 ] -> [0,1]
   float sky = (unitDir.y + 1.f) * 0.5f;
   // lerp between sky color and white
@@ -70,7 +113,7 @@ glm::vec3 Renderer::rayColor(const Ray& r, int depth) {
 
 Renderer::Renderer() {
   m_settings.accumulate = true;
-  m_settings.maxBounceDepth = 5;
+  m_settings.maxBounceDepth = 20;
   m_imageData = new uint32_t[WIDTH * HEIGHT];
   m_numThreads = static_cast<int>(std::thread::hardware_concurrency());
 }
@@ -102,6 +145,7 @@ void Renderer::onResize(int width, int height) {
   m_imageData = new uint32_t[m_width * m_height];
   delete[] m_accumulationData;
   m_accumulationData = new glm::vec4[m_width * m_height];
+
 #if PAR_EX
   m_ImageHorizontalIter.resize(m_width);
   m_ImageVerticalIter.resize(m_height);
@@ -159,6 +203,19 @@ void Renderer::render(const Camera& camera, const Scene& scene) {
   for (auto& future : futures) {
     future.wait();
   }
+
+//
+//  for (int y = m_height/2 + 30; y < m_height/2 + 50; ++y) {
+//    for (int x = m_width/3 + 40; x < m_width/2; ++x) {
+//      glm::vec4 color = colorPerPixel(x, y);
+//      m_accumulationData[y * m_width + x] += color;
+//      glm::vec4 accumulatedColor = m_accumulationData[y * m_width + x];
+//      accumulatedColor /= m_frameIndex;
+//      accumulatedColor = glm::clamp(accumulatedColor, glm::vec4(0), glm::vec4(1));
+//      m_imageData[y * m_width + x] = Utils::convertToRGBA(accumulatedColor);
+//    }
+//  }
+
 #endif
 
   m_finalTexture->load2dData(m_imageData, static_cast<int>(m_width), static_cast<int>(m_height));
@@ -183,4 +240,69 @@ void Renderer::reset() {
   delete[] m_accumulationData;
   m_accumulationData = new glm::vec4[m_width * m_height];
   m_frameIndex = 1;
+}
+
+/**
+ * Notes:
+ *
+ * point vector minus center vector squared == radius squared means point is on the surface of sphere
+ * (P - C) * (P - C) = r^2
+ * parameterize by the point along the ray
+ * (P(t) - C) * (P(t) - C) = r^2
+ * ray is: P(t) = A + tb    b is dir, A is origin
+ * ((A + tb) - C) * ((A + tb) - C) = r^2
+ * (tb + (A-C) * (tb + (A-C)) = r^2
+ * t^2(b * b) + 2tb(A-C) + (A-C)*(A-C) - r^2 = 0
+ * a == b * b
+ * b == 2b(A-C)
+ * c == (A-C)*(A-C) - r^2
+ * half b == b(A-C)
+ *
+ * discriminant == b^2 - 4ac == half_b^2 - ac
+ *
+ * A-C is pt to Center,
+ */
+bool Renderer::hitSphere(const Sphere& sphere, const Ray& r, Interval rayT, HitRecord& rec) const {
+  const glm::vec3 oc = r.origin - sphere.center;
+  const float half_b = (glm::dot(r.direction, oc));
+  const float a = glm::dot(r.direction, r.direction);
+  const float c = glm::dot(oc, oc) - sphere.radius * sphere.radius;
+  const float discriminant = half_b * half_b - a * c;
+  if (discriminant < 0) return false;
+  const float sqrtDiscriminant = std::sqrt(discriminant);
+
+  // nearest root in the acceptable range, otherwise no hit
+  float root = (-half_b - sqrtDiscriminant) / a;
+  if (!rayT.surrounds(root)) {
+    root = (-half_b + sqrtDiscriminant) / a;
+    if (!rayT.surrounds(root)) {
+      return false;
+    }
+  }
+
+  // solve for distance from ray origin to the point of intersection with sphere
+  rec.t = root;
+  rec.point = r.at(rec.t);
+  // ray at point t to sphere center, normalized
+  glm::vec3 outwardNormal = (rec.point - sphere.center) / sphere.radius;
+  rec.setFaceNormal(r, outwardNormal);
+
+  return true;
+}
+
+void Renderer::screenshot() {
+
+  std::ofstream out("screenshot.ppm");
+  if (!out.is_open()) {
+    return;
+  }
+  out << "P3\n" << m_width << ' ' << m_height << "\n255\n";
+  for (int j = 0; j < m_height; j++) {
+    for (int i = 0; i < m_width; i++) {
+        glm::vec3 color = Utils::fromPackedRGBA(m_imageData[j * m_width + i]);
+        out << color.r << ' ' << color.g << ' ' << color.b << '\n';
+    }
+  }
+  out.close();
+
 }
